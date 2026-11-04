@@ -14,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import jakarta.servlet.DispatcherType;
 
 @Configuration
 public class SecurityConfig {
@@ -31,9 +32,12 @@ public class SecurityConfig {
                 .exceptionHandling(e -> e.authenticationEntryPoint(
                         new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .authorizeHttpRequests(auth -> auth
+                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers("/api/auth/login").permitAll()
                         .requestMatchers("/api/auth/token-servico").hasRole("GESTOR")
                         .requestMatchers("/api/usuarios/**").hasRole("GESTOR")
+                        .requestMatchers(HttpMethod.POST, "/api/checklists", "/api/anomalias", "/api/anomalias/*/foto")
+                        .hasAnyRole("GESTOR", "INSTRUTOR")
                         .requestMatchers(HttpMethod.GET, "/api/**").hasAnyRole("GESTOR", "INSTRUTOR", "SERVICO")
                         .requestMatchers("/api/**").hasRole("GESTOR")
                         .anyRequest().denyAll())

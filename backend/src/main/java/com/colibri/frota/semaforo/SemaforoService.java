@@ -1,5 +1,9 @@
 package com.colibri.frota.semaforo;
 
+import com.colibri.frota.anomalia.Anomalia;
+import com.colibri.frota.anomalia.AnomaliaRepository;
+import com.colibri.frota.anomalia.GravidadeAnomalia;
+import com.colibri.frota.anomalia.StatusAnomalia;
 import com.colibri.frota.manutencao.Manutencao;
 import com.colibri.frota.manutencao.ManutencaoRepository;
 import com.colibri.frota.parametro.ParametroManutencao;
@@ -26,17 +30,20 @@ public class SemaforoService {
     private final VeiculoRepository veiculoRepo;
     private final ParametroManutencaoRepository parametroRepo;
     private final ManutencaoRepository manutencaoRepo;
+    private final AnomaliaRepository anomaliaRepo;
     private final int margemKmPercentual;
     private final int margemDias;
 
     public SemaforoService(VeiculoRepository veiculoRepo,
                            ParametroManutencaoRepository parametroRepo,
                            ManutencaoRepository manutencaoRepo,
+                           AnomaliaRepository anomaliaRepo,
                            @Value("${frota.semaforo.margem-km-percentual:10}") int margemKmPercentual,
                            @Value("${frota.semaforo.margem-dias:15}") int margemDias) {
         this.veiculoRepo = veiculoRepo;
         this.parametroRepo = parametroRepo;
         this.manutencaoRepo = manutencaoRepo;
+        this.anomaliaRepo = anomaliaRepo;
         this.margemKmPercentual = margemKmPercentual;
         this.margemDias = margemDias;
     }
@@ -75,6 +82,14 @@ public class SemaforoService {
         }
         avaliarDocumento("IPVA", v.getVencimentoIpva(), hoje).ifPresent(pendencias::add);
         avaliarDocumento("Licenciamento", v.getVencimentoLicenciamento(), hoje).ifPresent(pendencias::add);
+
+        // anomalias abertas: gravidade ALTA deixa vermelho, as demais deixam amarelo
+        for (Anomalia a : anomaliaRepo.findByVeiculoIdAndStatus(v.getId(), StatusAnomalia.ABERTA)) {
+            StatusSemaforo s = (a.getGravidade() == GravidadeAnomalia.ALTA) ? VERMELHO : AMARELO;
+            pendencias.add(new Pendencia("Anomalia", s,
+                    "Anomalia aberta (gravidade " + a.getGravidade() + "): " + a.getDescricao(),
+                    null, null));
+        }
 
         pendencias.sort(Comparator.comparing(Pendencia::status).reversed());
         StatusSemaforo geral = pendencias.isEmpty() ? VERDE : pendencias.get(0).status();
