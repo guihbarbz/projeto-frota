@@ -1,7 +1,17 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { API_URL } from '../config';
-import { AnomaliaRequest, AnomaliaResponse, ChecklistRequest, SemaforoVeiculo } from '../models';
+import { API_BASE, API_URL } from '../config';
+import {
+  AnomaliaRequest,
+  AnomaliaResponse,
+  ChecklistRequest,
+  HistoricoVeiculo,
+  ManutencaoRequest,
+  ManutencaoResponse,
+  ParametroResponse,
+  SemaforoVeiculo,
+  TipoVeiculo,
+} from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class FrotaApi {
@@ -13,6 +23,14 @@ export class FrotaApi {
 
   semaforoDoVeiculo(id: number) {
     return this.http.get<SemaforoVeiculo>(`${API_URL}/semaforo/${id}`);
+  }
+
+  historico(id: number) {
+    return this.http.get<HistoricoVeiculo>(`${API_URL}/veiculos/${id}/historico`);
+  }
+
+  parametros(tipo: TipoVeiculo) {
+    return this.http.get<ParametroResponse[]>(`${API_URL}/parametros`, { params: { tipo } });
   }
 
   anomaliasAbertas(veiculoId: number) {
@@ -33,5 +51,18 @@ export class FrotaApi {
     const dados = new FormData();
     dados.append('arquivo', arquivo);
     return this.http.post<AnomaliaResponse>(`${API_URL}/anomalias/${anomaliaId}/foto`, dados);
+  }
+
+  resolverAnomalia(id: number, nota: string | null) {
+    return this.http.put<AnomaliaResponse>(`${API_URL}/anomalias/${id}/resolver`, { nota });
+  }
+
+  // a foto exige o token, então é baixada pelo código e exibida a partir do arquivo em memória
+  foto(fotoUrl: string) {
+    return this.http.get(`${API_BASE}${fotoUrl}`, { responseType: 'blob' });
+  }
+
+  registrarManutencao(req: ManutencaoRequest) {
+    return this.http.post<ManutencaoResponse>(`${API_URL}/manutencoes`, req);
   }
 }
