@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FrotaApi } from '../../api/frota.api';
 import { AnomaliaResponse, HistoricoVeiculo, ParametroResponse } from '../../models';
-import { hojeLocal } from '../../util/data';
+import { dataBrParaIso, hojeLocal, isoParaDataBr, mascararData } from '../../util/data';
 import { mensagemDeErro } from '../../util/erro';
 import { COR_FUNDO, ROTULO_GRAVIDADE, ROTULO_STATUS } from '../../util/status';
 
@@ -20,7 +20,14 @@ import { COR_FUNDO, ROTULO_GRAVIDADE, ROTULO_STATUS } from '../../util/status';
           class="h-10 w-10 flex items-center justify-center rounded-lg border border-slate-300 text-slate-700"
           >←</a
         >
-        <h1 class="text-lg font-bold text-slate-800">Veículo</h1>
+        <h1 class="flex-1 text-lg font-bold text-slate-800">Veículo</h1>
+        @if (h(); as v) {
+          <a
+            [routerLink]="['/painel/veiculos', v.veiculoId, 'editar']"
+            class="h-10 px-3 flex items-center rounded-lg border border-slate-300 text-sm text-slate-700"
+            >Editar</a
+          >
+        }
       </header>
 
       <section class="p-4 space-y-4 max-w-2xl mx-auto">
@@ -161,9 +168,13 @@ import { COR_FUNDO, ROTULO_GRAVIDADE, ROTULO_STATUS } from '../../util/status';
               <label class="block">
                 <span class="text-sm font-medium text-slate-700">Data</span>
                 <input
-                  type="date"
-                  [ngModel]="dataManut()"
-                  (ngModelChange)="dataManut.set($event)"
+                  type="text"
+                  inputmode="numeric"
+                  maxlength="10"
+                  autocomplete="off"
+                  placeholder="dd/mm/aaaa"
+                  [value]="dataManut()"
+                  (input)="onData($event)"
                   class="mt-1 w-full h-12 rounded-lg border border-slate-300 px-3 text-base"
                 />
               </label>
@@ -288,7 +299,7 @@ export class VeiculoDetalhePage {
   foto = signal<string | null>(null);
 
   parametroId = signal<number | null>(null);
-  dataManut = signal(hojeLocal());
+  dataManut = signal(isoParaDataBr(hojeLocal()));
   kmManut = signal<number | null>(null);
   custo = signal<number | null>(null);
   obsManut = signal('');
@@ -304,7 +315,8 @@ export class VeiculoDetalhePage {
         this.carregando.set(false);
         this.api.parametros(h.tipo).subscribe({
           next: (p) => this.parametros.set(p),
-          error: (e) => this.erroGeral.set(mensagemDeErro(e, 'Não foi possível carregar os tipos de manutenção.')),
+          error: (e) =>
+            this.erroGeral.set(mensagemDeErro(e, 'Não foi possível carregar os tipos de manutenção.')),
         });
       },
       error: (e) => {
@@ -355,12 +367,23 @@ export class VeiculoDetalhePage {
     this.foto.set(null);
   }
 
+  onData(evento: Event): void {
+    const campo = evento.target as HTMLInputElement;
+    const mascarado = mascararData(campo.value);
+    campo.value = mascarado;
+    this.dataManut.set(mascarado);
+  }
+
   registrarManutencao(): void {
     const parametroId = this.parametroId();
     const km = this.kmManut();
-    const data = this.dataManut();
-    if (parametroId === null || km === null || !data) {
-      this.erroManutencao.set('Escolha o tipo e preencha a data e o km.');
+    if (parametroId === null || km === null) {
+      this.erroManutencao.set('Escolha o tipo e preencha o km.');
+      return;
+    }
+    const data = dataBrParaIso(this.dataManut());
+    if (!data) {
+      this.erroManutencao.set('Data inválida. Use o formato dd/mm/aaaa.');
       return;
     }
     this.erroManutencao.set(null);

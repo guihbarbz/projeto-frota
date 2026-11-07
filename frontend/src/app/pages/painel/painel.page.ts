@@ -18,6 +18,11 @@ import { COR_FUNDO, ROTULO_STATUS } from '../../util/status';
         </div>
         <div class="flex gap-2">
           <a
+            routerLink="/painel/veiculos/novo"
+            class="h-10 px-3 flex items-center rounded-lg bg-blue-600 text-sm font-medium text-white"
+            >Novo veículo</a
+          >
+          <a
             routerLink="/checklist"
             class="h-10 px-3 flex items-center rounded-lg border border-slate-300 text-sm text-slate-700"
             >Checklist</a

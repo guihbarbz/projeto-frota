@@ -97,3 +97,18 @@ export interface HistoricoVeiculo {
   checklistsRecentes: ChecklistResponse[];
   anomalias: AnomaliaResponse[];
 }
+
+export interface VeiculoRequest {
+  placa: string;
+  modelo: string;
+  ano: number;
+  tipo: TipoVeiculo;
+  kmAtual: number;
+  vencimentoIpva: string | null;
+  vencimentoLicenciamento: string | null;
+}
+
+export interface VeiculoResponse extends VeiculoRequest {
+  id: number;
+  ativo: boolean;
+}

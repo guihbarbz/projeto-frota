@@ -11,6 +11,8 @@ import {
   ParametroResponse,
   SemaforoVeiculo,
   TipoVeiculo,
+  VeiculoRequest,
+  VeiculoResponse,
 } from '../models';
 
 @Injectable({ providedIn: 'root' })
@@ -27,6 +29,22 @@ export class FrotaApi {
 
   historico(id: number) {
     return this.http.get<HistoricoVeiculo>(`${API_URL}/veiculos/${id}/historico`);
+  }
+
+  veiculo(id: number) {
+    return this.http.get<VeiculoResponse>(`${API_URL}/veiculos/${id}`);
+  }
+
+  criarVeiculo(req: VeiculoRequest) {
+    return this.http.post<VeiculoResponse>(`${API_URL}/veiculos`, req);
+  }
+
+  atualizarVeiculo(id: number, req: VeiculoRequest) {
+    return this.http.put<VeiculoResponse>(`${API_URL}/veiculos/${id}`, req);
+  }
+
+  desativarVeiculo(id: number) {
+    return this.http.delete<void>(`${API_URL}/veiculos/${id}`);
   }
 
   parametros(tipo: TipoVeiculo) {
