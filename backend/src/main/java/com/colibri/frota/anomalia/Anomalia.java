@@ -30,7 +30,9 @@ public class Anomalia {
     @Column(nullable = false)
     private StatusAnomalia status = StatusAnomalia.ABERTA;
 
-    private String fotoArquivo;
+    // a foto em si fica na tabela foto_anomalia; aqui só o indicador
+    @Column(name = "tem_foto", nullable = false, columnDefinition = "boolean default false")
+    private boolean temFoto;
 
     @Column(nullable = false)
     private Instant criadaEm = Instant.now();
@@ -51,8 +53,8 @@ public class Anomalia {
     public void setGravidade(GravidadeAnomalia gravidade) { this.gravidade = gravidade; }
     public StatusAnomalia getStatus() { return status; }
     public void setStatus(StatusAnomalia status) { this.status = status; }
-    public String getFotoArquivo() { return fotoArquivo; }
-    public void setFotoArquivo(String fotoArquivo) { this.fotoArquivo = fotoArquivo; }
+    public boolean isTemFoto() { return temFoto; }
+    public void setTemFoto(boolean temFoto) { this.temFoto = temFoto; }
     public Instant getCriadaEm() { return criadaEm; }
     public Instant getResolvidaEm() { return resolvidaEm; }
     public void setResolvidaEm(Instant resolvidaEm) { this.resolvidaEm = resolvidaEm; }

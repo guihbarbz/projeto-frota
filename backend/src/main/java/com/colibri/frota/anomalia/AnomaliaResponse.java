@@ -8,7 +8,7 @@ public record AnomaliaResponse(Long id, Long veiculoId, String placa, String rep
                                String notaResolucao) {
 
     public static AnomaliaResponse de(Anomalia a) {
-        String foto = a.getFotoArquivo() == null ? null : "/api/anomalias/" + a.getId() + "/foto";
+        String foto = a.isTemFoto() ? "/api/anomalias/" + a.getId() + "/foto" : null;
         return new AnomaliaResponse(a.getId(), a.getVeiculo().getId(), a.getVeiculo().getPlaca(),
                 a.getReportadoPor().getNome(), a.getDescricao(), a.getGravidade(), a.getStatus(),
                 foto, a.getCriadaEm(), a.getResolvidaEm(), a.getNotaResolucao());

@@ -5,11 +5,11 @@ import com.colibri.frota.usuario.UsuarioRepository;
 import com.colibri.frota.veiculo.Veiculo;
 import com.colibri.frota.veiculo.VeiculoRepository;
 import jakarta.validation.Valid;
-import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -22,13 +22,16 @@ import java.util.List;
 public class AnomaliaController {
 
     private final AnomaliaRepository repo;
+    private final FotoAnomaliaRepository fotoRepo;
     private final VeiculoRepository veiculoRepo;
     private final UsuarioRepository usuarioRepo;
     private final ArmazenamentoFotos fotos;
 
-    public AnomaliaController(AnomaliaRepository repo, VeiculoRepository veiculoRepo,
-                              UsuarioRepository usuarioRepo, ArmazenamentoFotos fotos) {
+    public AnomaliaController(AnomaliaRepository repo, FotoAnomaliaRepository fotoRepo,
+                              VeiculoRepository veiculoRepo, UsuarioRepository usuarioRepo,
+                              ArmazenamentoFotos fotos) {
         this.repo = repo;
+        this.fotoRepo = fotoRepo;
         this.veiculoRepo = veiculoRepo;
         this.usuarioRepo = usuarioRepo;
         this.fotos = fotos;
@@ -71,22 +74,30 @@ public class AnomaliaController {
     }
 
     @PostMapping(value = "/{id}/foto", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Transactional
     public AnomaliaResponse anexarFoto(@PathVariable Long id,
                                        @RequestParam("arquivo") MultipartFile arquivo) {
         Anomalia a = achar(id);
-        a.setFotoArquivo(fotos.salvar(arquivo));
+        ArmazenamentoFotos.Imagem imagem = fotos.ler(arquivo);
+
+        FotoAnomalia foto = fotoRepo.findById(id).orElseGet(FotoAnomalia::new);
+        foto.setAnomaliaId(id);
+        foto.setTipo(imagem.tipo());
+        foto.setDados(imagem.dados());
+        fotoRepo.save(foto);
+
+        a.setTemFoto(true);
         return AnomaliaResponse.de(repo.save(a));
     }
 
     @GetMapping("/{id}/foto")
-    public ResponseEntity<Resource> foto(@PathVariable Long id) {
-        Anomalia a = achar(id);
-        if (a.getFotoArquivo() == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Esta anomalia não tem foto");
-        }
+    public ResponseEntity<byte[]> foto(@PathVariable Long id) {
+        achar(id);
+        FotoAnomalia foto = fotoRepo.findById(id).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "Esta anomalia não tem foto"));
         return ResponseEntity.ok()
-                .contentType(ArmazenamentoFotos.tipo(a.getFotoArquivo()))
-                .body(fotos.carregar(a.getFotoArquivo()));
+                .contentType(MediaType.parseMediaType(foto.getTipo()))
+                .body(foto.getDados());
     }
 
     @PutMapping("/{id}/resolver")
