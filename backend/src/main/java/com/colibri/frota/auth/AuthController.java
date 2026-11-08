@@ -6,6 +6,7 @@ import com.colibri.frota.usuario.Usuario;
 import com.colibri.frota.usuario.UsuarioRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -33,6 +34,20 @@ public class AuthController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED,
                         "Credenciais inválidas"));
         return jwt.gerar(u);
+    }
+
+    /** Cada usuário troca a própria senha, informando a atual. */
+    @PutMapping("/senha")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void alterarSenha(@Valid @RequestBody AlterarSenhaRequest req, Authentication auth) {
+        Usuario u = repo.findByEmail(auth.getName())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        // 400 (e não 401) de propósito: o 401 faria o aplicativo deslogar a pessoa
+        if (!encoder.matches(req.senhaAtual(), u.getSenhaHash())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Senha atual incorreta");
+        }
+        u.setSenhaHash(encoder.encode(req.novaSenha()));
+        repo.save(u);
     }
 
     /** Só o gestor gera o token da automação (n8n). Trate-o como uma senha. */

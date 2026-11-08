@@ -44,6 +44,20 @@ public class UsuarioController {
         return UsuarioResponse.de(repo.save(u));
     }
 
+    /** O gestor define uma senha nova para outra pessoa (por exemplo, instrutor que esqueceu). */
+    @PutMapping("/{id}/senha")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void redefinirSenha(@PathVariable Long id, @Valid @RequestBody NovaSenhaRequest req) {
+        Usuario u = repo.findById(id).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
+        if (u.getPerfil() == Perfil.SERVICO) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "O usuário de serviço não usa senha");
+        }
+        u.setSenhaHash(encoder.encode(req.novaSenha()));
+        repo.save(u);
+    }
+
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void desativar(@PathVariable Long id, Authentication auth) {

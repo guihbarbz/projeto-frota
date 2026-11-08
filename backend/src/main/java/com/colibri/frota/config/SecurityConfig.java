@@ -43,6 +43,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/login", "/api/health").permitAll()
                         .requestMatchers("/api/auth/token-servico").hasRole("GESTOR")
                         .requestMatchers("/api/usuarios/**").hasRole("GESTOR")
+                        .requestMatchers(HttpMethod.PUT, "/api/auth/senha").hasAnyRole("GESTOR", "INSTRUTOR")
                         .requestMatchers(HttpMethod.POST, "/api/checklists", "/api/anomalias", "/api/anomalias/*/foto")
                         .hasAnyRole("GESTOR", "INSTRUTOR")
                         .requestMatchers(HttpMethod.GET, "/api/**").hasAnyRole("GESTOR", "INSTRUTOR", "SERVICO")
