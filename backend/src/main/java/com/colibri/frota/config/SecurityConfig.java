@@ -40,7 +40,7 @@ public class SecurityConfig {
                         new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .authorizeHttpRequests(auth -> auth
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
-                        .requestMatchers("/api/auth/login").permitAll()
+                        .requestMatchers("/api/auth/login", "/api/health").permitAll()
                         .requestMatchers("/api/auth/token-servico").hasRole("GESTOR")
                         .requestMatchers("/api/usuarios/**").hasRole("GESTOR")
                         .requestMatchers(HttpMethod.POST, "/api/checklists", "/api/anomalias", "/api/anomalias/*/foto")
